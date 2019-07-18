@@ -6,9 +6,8 @@ var bodyParser = require('body-parser');
 // Inicializar variables de Express
 const app = express()
 
-// Declarar Variable Globales
-var serverPort = 3300;
-var urlDB = 'mongodb+srv://emailVerification_user:JVuWWPjj48PvTlna@cluster0-fmnnc.mongodb.net/emailVerification?retryWrites=true&w=majority';
+// Importar Variable Globales
+require('./config/config');
 
 // Body Parser: parse application/x-www-form-urlencoded & application/json
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -18,7 +17,7 @@ app.use(bodyParser.json());
 var loginController = require('./routes/login');
 
 // Conexión a la base de datos
-mongoose.connect(urlDB, { useNewUrlParser: true, useCreateIndex: true,  useFindAndModify: false }, (err, res) => {
+mongoose.connect(process.env.URLDB, { useNewUrlParser: true, useCreateIndex: true,  useFindAndModify: false }, (err, res) => {
     if( err ) throw err;
     console.log('\x1b[32m\x1b[36m' + 'Base de datos:\x1b[32m\x1b[93m', 'Online');
 });
@@ -26,7 +25,8 @@ mongoose.connect(urlDB, { useNewUrlParser: true, useCreateIndex: true,  useFindA
 // Rutas
 app.use('/login', loginController.loginPost);
 app.use('/register', loginController.signupPost);
-
+app.use('/confirmation/:token', loginController.confirmationPost);
+// app.post('/resend', loginController.resendTokenPost);
 
 // Última Ruta
 app.get('/', function (req, res) {
@@ -34,6 +34,6 @@ app.get('/', function (req, res) {
 })
  
 // Escuchar peticiones
-app.listen(serverPort, () => {
-    console.log('\x1b[32m\x1b[36m' + 'Express server en puerto \x1b[32m\x1b[91m'+ serverPort + '\x1b[32m\x1b[36m:\x1b[32m\x1b[93m', 'Online');
+app.listen(process.env.PORT, () => {
+    console.log('\x1b[32m\x1b[36m' + 'Express server en puerto \x1b[32m\x1b[91m'+ process.env.PORT + '\x1b[32m\x1b[36m:\x1b[32m\x1b[93m', 'Online');
 });

@@ -46,7 +46,8 @@ exports.loginPost = function(req, res, next) {
 * POST /signup
 */
 exports.signupPost = function(req, res, next) {
-    var body = req.body;
+    
+  var body = req.body;
 
   // Make sure this account doesn't already exist
   User.findOne({ email: body.email }, function (err, user) {
@@ -67,13 +68,66 @@ exports.signupPost = function(req, res, next) {
             if (err) { return res.status(500).send({ msg: err.message }); }
 
             // Send the email
-            var transporter = nodemailer.createTransport({ service: 'Sendgrid', auth: { user: process.env.SENDGRID_USERNAME, pass: process.env.SENDGRID_PASSWORD } });
-            var mailOptions = { from: 'no-reply@yourwebapplication.com', to: user.email, subject: 'Account Verification Token', text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/confirmation\/' + token.token + '.\n' };
+            var transporter = nodemailer.createTransport({ 
+                host: "mail.dharma-consulting.com",
+                port: 465,
+                secure: true,
+                auth: { 
+                    user: process.env.JUSTHOST_USERNAME,
+                    pass: process.env.JUSTHOST_PASSWORD
+                } 
+            });
+
+            var mailOptions = { 
+                from: '"DharmaPro 👻" <admin@dharma-consulting.com>',
+                to: 'jvillanueva@dharma-consulting.com', // user.email
+                subject: 'Account Verification Token',
+                text: 'Hello,\n\n' + 'Please verify your account by clicking the link: \nhttp:\/\/' + req.headers.host + '\/confirmation\/' + token.token + '.\n' 
+            };
+
             transporter.sendMail(mailOptions, function (err) {
-                if (err) { return res.status(500).send({ msg: err.message }); }
+                if (err) { 
+                    return res.status(500).send({ msg: err.message }); 
+                }
+
                 res.status(200).send('A verification email has been sent to ' + user.email + '.');
             });
         });
     });
   });
+};
+
+/**
+* POST /confirmation
+*/
+exports.confirmationPost = function (req, res, next) {
+    
+    var token = req.params.token || 'nulo';
+    var email = 'jvillanueva@gmail.com';
+
+    // Find a matching token
+    Token.findOne( {token: token}, function (err, token) {
+
+        if (!token) return res.status(400).send({ 
+            type: 'not-verified', 
+            msg: 'We were unable to find a valid token. Your token my have expired.',
+            token: token
+        });
+
+        // If we found a token, find a matching user
+        User.findOne({ _id: token._userId, email: email }, function (err, user) {
+            if (!user) return res.status(400).send({
+                 msg: 'We were unable to find a user for this token.' }
+                 
+                 );
+            if (user.isVerified) return res.status(400).send({ type: 'already-verified', msg: 'This user has already been verified.' });
+
+            // Verify and save the user
+            user.isVerified = true;
+            user.save(function (err) {
+                if (err) { return res.status(500).send({ msg: err.message }); }
+                res.status(200).send("The account has been verified. Please log in.");
+            });
+        });
+    });
 };
