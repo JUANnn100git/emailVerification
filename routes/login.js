@@ -25,13 +25,14 @@ exports.loginPost = function(req, res, next) {
     var errors = validationResult(req);
     if (errors) return res.status(400).send(errors);
 
-    User.findOne({ email: req.body.email }, function(err, user) {
+    User.findOne({ email: req.body.email }, function(err1, user) {
         
-        if(err) return res.status(500).send({msg: 'Error'});
+        if(err1) return res.status(500).send({msg: 'Error'});
         
         if (!user) return res.status(401).send({ msg: 'The email address ' + req.body.email + ' is not associated with any account. Double-check your email address and try again.'});
 
-        user.comparePassword(req.body.password, function (err, isMatch) {
+        user.comparePassword(req.body.password, function (err2, isMatch) {
+            if(err2) return res.status(500).send({msg: 'Error'});
             if (!isMatch) return res.status(401).send({ msg: 'Invalid email or password' });
 
             // Make sure the user has been verified
