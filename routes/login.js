@@ -26,6 +26,9 @@ exports.loginPost = function(req, res, next) {
     if (errors) return res.status(400).send(errors);
 
     User.findOne({ email: req.body.email }, function(err, user) {
+        
+        if(err) return res.status(500).send({msg: 'Error'});
+        
         if (!user) return res.status(401).send({ msg: 'The email address ' + req.body.email + ' is not associated with any account. Double-check your email address and try again.'});
 
         user.comparePassword(req.body.password, function (err, isMatch) {
@@ -51,6 +54,8 @@ exports.signupPost = function(req, res, next) {
 
   // Make sure this account doesn't already exist
   User.findOne({ email: body.email }, function (err, user) {
+      
+      if(err) return res.status(500).send({msg: 'Error'});
 
     // Make sure user doesn't already exist
     if (user) return res.status(400).send({ msg: 'The email address you have entered is already associated with another account.' });
@@ -107,6 +112,8 @@ exports.confirmationPost = function (req, res, next) {
 
     // Find a matching token
     Token.findOne( {token: token}, function (err, token) {
+        
+        if(err) return res.status(500).send({msg: 'Error'});
 
         if (!token) return res.status(400).send({ 
             type: 'not-verified', 
